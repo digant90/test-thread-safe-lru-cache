@@ -1,6 +1,12 @@
 /*
  * Least Recently Used (LRU) cache.
  *
+ * Performance:
+ * - Average O(1) time complexity for get and put
+ *   (HashMap gives O(1) lookup, doubly-linked list gives O(1) reorder/evict)
+ * - No locking — single-threaded design, no synchronization overhead
+ * - Memory usage bounded by configured capacity
+ *   (evicts LRU entry when map.len() == capacity)
  *
  * Two core list operations:
  * - push_front: insert a node right after the dummy head (MRU position)
@@ -114,6 +120,7 @@ impl LruCache {
 
     /*
      * Retrieve a clone of the value associated with key.
+     * O(1) — HashMap lookup + constant-time linked-list reorder.
      *
      * Accessing a key promotes it to the most-recently-used position.
      */
@@ -126,9 +133,10 @@ impl LruCache {
 
     /*
      * Insert or update a key-value pair.
+     * O(1) — HashMap insert + constant-time linked-list operations.
      *
      * If the cache is at capacity and the key is new, the least-recently-used
-     * entry is evicted.
+     * entry is evicted to keep memory bounded by capacity.
      */
     pub fn put(&mut self, key: i32, value: i32) {
         if let Some(node) = self.map.get(&key).map(Rc::clone) {
